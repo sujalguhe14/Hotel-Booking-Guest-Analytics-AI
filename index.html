@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Revenue & Cancellation Executive Analytics Dashboard</title>
+
+    <!-- Google Fonts & Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+    <!-- 1. TOP EXECUTIVE HEADER -->
+    <header class="exec-header">
+        <div class="brand-container">
+            <div class="brand-icon">🏨</div>
+            <div>
+                <h1 class="brand-title">Hotel Booking & Guest Analysis Dashboard</h1>
+                <p class="brand-subtitle">Executive Revenue Optimization & AI Cancellation Predictor Platform</p>
+            </div>
+        </div>
+
+        <div class="header-meta">
+            <span class="badge" id="recordCountBadge">Loading Dataset...</span>
+            <button class="action-btn" id="btnExportCsv">📥 Export CSV</button>
+            <button class="action-btn primary" onclick="window.print()">🖨️ Print Report PDF</button>
+        </div>
+    </header>
+
+    <!-- 2. INTERACTIVE SLICERS BAR -->
+    <section class="slicers-bar">
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerHotel">Hotel Type</label>
+            <select id="slicerHotel" class="slicer-select">
+                <option value="ALL">All Hotels</option>
+                <option value="City Hotel">City Hotel</option>
+                <option value="Resort Hotel">Resort Hotel</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerYear">Arrival Year</label>
+            <select id="slicerYear" class="slicer-select">
+                <option value="ALL">All Years</option>
+                <option value="2015">2015</option>
+                <option value="2016">2016</option>
+                <option value="2017">2017</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerMonth">Arrival Month</label>
+            <select id="slicerMonth" class="slicer-select">
+                <option value="ALL">All Months</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerRoom">Room Type</label>
+            <select id="slicerRoom" class="slicer-select">
+                <option value="ALL">All Room Types</option>
+                <option value="A">Room A</option>
+                <option value="B">Room B</option>
+                <option value="C">Room C</option>
+                <option value="D">Room D</option>
+                <option value="E">Room E</option>
+                <option value="F">Room F</option>
+                <option value="G">Room G</option>
+                <option value="H">Room H</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerCustomer">Customer Type</label>
+            <select id="slicerCustomer" class="slicer-select">
+                <option value="ALL">All Customer Types</option>
+                <option value="Transient">Transient</option>
+                <option value="Transient-Party">Transient-Party</option>
+                <option value="Contract">Contract</option>
+                <option value="Group">Group</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerSegment">Market Segment</label>
+            <select id="slicerSegment" class="slicer-select">
+                <option value="ALL">All Segments</option>
+                <option value="Online TA">Online TA</option>
+                <option value="Offline TA/TO">Offline TA/TO</option>
+                <option value="Groups">Groups</option>
+                <option value="Direct">Direct</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Complementary">Complementary</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerChannel">Booking Channel</label>
+            <select id="slicerChannel" class="slicer-select">
+                <option value="ALL">All Channels</option>
+                <option value="TA/TO">TA/TO</option>
+                <option value="Direct">Direct</option>
+                <option value="Corporate">Corporate</option>
+                <option value="GDS">GDS</option>
+            </select>
+        </div>
+
+        <div class="slicer-group">
+            <label class="slicer-label" for="slicerStatus">Status</label>
+            <select id="slicerStatus" class="slicer-select">
+                <option value="ALL">All Statuses</option>
+                <option value="REALIZED">Realized (Check-Out)</option>
+                <option value="CANCELLED">Cancelled</option>
+            </select>
+        </div>
+
+        <div class="slicer-group" style="justify-content: flex-end;">
+            <button id="btnResetFilters" class="action-btn" style="height: 34px;">🔄 Reset Filters</button>
+        </div>
+    </section>
+
+    <!-- 3. NAVIGATION TABS BAR -->
+    <nav class="nav-tabs-bar">
+        <button class="tab-btn active" data-tab="tab-overview">📊 Overview</button>
+        <button class="tab-btn" data-tab="tab-revenue">💰 Revenue Drivers</button>
+        <button class="tab-btn" data-tab="tab-cancellations">⚠️ Cancellation Analysis</button>
+        <button class="tab-btn" data-tab="tab-ai-predictor" style="color: var(--accent-cyan);">🤖 AI Risk Predictor</button>
+    </nav>
+
+    <!-- 4. DASHBOARD BODY -->
+    <main class="dashboard-body">
+
+        <!-- CORE KPI CARDS (Always visible at top of sections) -->
+        <section class="kpi-grid">
+            <div class="kpi-card cyan">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Revenue</span>
+                    <span class="kpi-icon">💵</span>
+                </div>
+                <div class="kpi-value" id="kpiTotalRevenue">$0</div>
+                <div class="kpi-subtext">Gross Potential Revenue</div>
+            </div>
+
+            <div class="kpi-card emerald">
+                <div class="kpi-header">
+                    <span class="kpi-title">Realized Revenue</span>
+                    <span class="kpi-icon">✅</span>
+                </div>
+                <div class="kpi-value" id="kpiRealizedRevenue">$0</div>
+                <div class="kpi-subtext">Completed Non-Cancelled Stays</div>
+            </div>
+
+            <div class="kpi-card rose">
+                <div class="kpi-header">
+                    <span class="kpi-title">Revenue Lost</span>
+                    <span class="kpi-icon">💸</span>
+                </div>
+                <div class="kpi-value" id="kpiRevenueLost">$0</div>
+                <div class="kpi-subtext">Cancelled Bookings Leakage</div>
+            </div>
+
+            <div class="kpi-card blue">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Bookings</span>
+                    <span class="kpi-icon">📅</span>
+                </div>
+                <div class="kpi-value" id="kpiTotalBookings">0</div>
+                <div class="kpi-subtext">Total Reservations Created</div>
+            </div>
+
+            <div class="kpi-card rose">
+                <div class="kpi-header">
+                    <span class="kpi-title">Cancelled Bookings</span>
+                    <span class="kpi-icon">🚫</span>
+                </div>
+                <div class="kpi-value" id="kpiCancelledBookings">0</div>
+                <div class="kpi-subtext">Cancellations & No-Shows</div>
+            </div>
+
+            <div class="kpi-card rose">
+                <div class="kpi-header">
+                    <span class="kpi-title">Cancellation Rate</span>
+                    <span class="kpi-icon">📉</span>
+                </div>
+                <div class="kpi-value" id="kpiCancellationRate">0.0%</div>
+                <div class="kpi-subtext">% of Total Bookings Cancelled</div>
+            </div>
+
+            <div class="kpi-card amber">
+                <div class="kpi-header">
+                    <span class="kpi-title">Average Daily Rate</span>
+                    <span class="kpi-icon">🏷️</span>
+                </div>
+                <div class="kpi-value" id="kpiAdr">$0.00</div>
+                <div class="kpi-subtext">ADR Per Room Night</div>
+            </div>
+
+            <div class="kpi-card purple">
+                <div class="kpi-header">
+                    <span class="kpi-title">Avg Length of Stay</span>
+                    <span class="kpi-icon">🌙</span>
+                </div>
+                <div class="kpi-value" id="kpiAvgStay">0.0 nights</div>
+                <div class="kpi-subtext">Week + Weekend Nights</div>
+            </div>
+
+            <div class="kpi-card blue">
+                <div class="kpi-header">
+                    <span class="kpi-title">Repeat Guest Rate</span>
+                    <span class="kpi-icon">🔄</span>
+                </div>
+                <div class="kpi-value" id="kpiRepeatRate">0.0%</div>
+                <div class="kpi-subtext">Loyalty / Returning Guests</div>
+            </div>
+        </section>
+
+        <!-- SMART NARRATIVE CALLOUT BOX -->
+        <section class="narrative-box">
+            <div class="narrative-header">
+                <span>💡 Executive Smart Narrative & Insights Summary</span>
+            </div>
+            <div class="narrative-items" id="narrativeList">
+                <!-- Synthesized dynamically in app.js -->
+            </div>
+        </section>
+
+        <!-- TAB 1: OVERVIEW -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="visuals-grid-2">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Monthly Revenue Trend</div>
+                            <div class="chart-subtitle">Realized Revenue vs. Revenue Lost from Cancellations ($)</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRevenueTrend"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">ADR vs. Cancellation Rate Combo Chart</div>
+                            <div class="chart-subtitle">Dual Axis: Average Daily Rate ($) vs. Monthly Cancellation Rate (%)</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartAdrVsCanc"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: REVENUE DRIVERS -->
+        <div id="tab-revenue" class="tab-content">
+            <div class="visuals-grid-3">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Revenue by Hotel Type</div>
+                            <div class="chart-subtitle">City Hotel vs Resort Hotel Revenue Realization</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRevenueByHotel"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Revenue by Room Type</div>
+                            <div class="chart-subtitle">Horizontal Rank of Realized Revenue by Reserved Room Tier</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRevenueByRoom"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Revenue by Customer Group</div>
+                            <div class="chart-subtitle">Share of Realized Revenue across Demographics</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartRevenueByCustomer"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CANCELLATION ANALYSIS -->
+        <div id="tab-cancellations" class="tab-content">
+            <div class="visuals-grid-3">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Cancellation Rate by Lead Time Window</div>
+                            <div class="chart-subtitle">0-30, 31-90, 91-180, and 180+ Days Booking Lead Time</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartLeadTimeCanc"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Revenue Lost by Channel</div>
+                            <div class="chart-subtitle">Financial Leakage by Booking Distribution Channel</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="chartChannelCanc"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">NetworkX Guest Relationship Graph</div>
+                            <div class="chart-subtitle">Interactive flow: Customer Type → Channel → Hotel → Cancellation Outcome</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="networkCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: AI RISK PREDICTOR & ML ALGORITHM -->
+        <div id="tab-ai-predictor" class="tab-content">
+            <div class="visuals-grid-2">
+                <!-- AI Simulator Card -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">🤖 Python AI Booking Risk Calculator</div>
+                            <div class="chart-subtitle">Simulate real-time reservation attributes to score cancellation probability</div>
+                        </div>
+                    </div>
+                    <form id="aiSimulatorForm" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;" onsubmit="return false;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="slicer-group">
+                                <label class="slicer-label">Lead Time (Days): <span id="valLeadTime" style="color: var(--accent-cyan); font-weight: bold;">60</span></label>
+                                <input type="range" id="inputLeadTime" min="0" max="365" value="60" style="accent-color: var(--accent-cyan);" oninput="document.getElementById('valLeadTime').textContent = this.value">
+                            </div>
+                            <div class="slicer-group">
+                                <label class="slicer-label">ADR ($ Nightly): <span id="valAdr" style="color: var(--accent-amber); font-weight: bold;">$130</span></label>
+                                <input type="range" id="inputAdr" min="30" max="400" value="130" style="accent-color: var(--accent-amber);" oninput="document.getElementById('valAdr').textContent = '$' + this.value">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="slicer-group">
+                                <label class="slicer-label">Deposit Type</label>
+                                <select id="inputDeposit" class="slicer-select">
+                                    <option value="No Deposit">No Deposit</option>
+                                    <option value="Non Refund">Non Refundable</option>
+                                    <option value="Refundable">Refundable</option>
+                                </select>
+                            </div>
+                            <div class="slicer-group">
+                                <label class="slicer-label">Market Segment</label>
+                                <select id="inputMktSeg" class="slicer-select">
+                                    <option value="Online TA">Online TA</option>
+                                    <option value="Offline TA/TO">Offline TA/TO</option>
+                                    <option value="Direct">Direct</option>
+                                    <option value="Corporate">Corporate</option>
+                                    <option value="Groups">Groups</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="slicer-group">
+                                <label class="slicer-label">Total Stay Nights</label>
+                                <input type="number" id="inputNights" value="3" min="1" max="30" class="slicer-select">
+                            </div>
+                            <div class="slicer-group">
+                                <label class="slicer-label">Previous Cancellations</label>
+                                <input type="number" id="inputPrevCanc" value="0" min="0" max="10" class="slicer-select">
+                            </div>
+                        </div>
+
+                        <button type="button" id="btnRunAiPrediction" class="action-btn primary" style="justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+                            🔮 Calculate AI Risk Score
+                        </button>
+                    </form>
+                </div>
+
+                <!-- AI Output Results Card -->
+                <div class="chart-card" style="justify-content: space-between;">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">🎯 AI Risk Score & Recommendation</div>
+                            <div class="chart-subtitle">Powered by Random Forest Machine Learning Model</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 1.5rem 0;">
+                        <div id="aiRiskScoreDisplay" style="font-size: 3.5rem; font-weight: 800; color: var(--accent-rose);">38.5%</div>
+                        <div id="aiRiskBadge" class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-rose); font-size: 0.9rem; padding: 0.4rem 1rem;">MEDIUM RISK</div>
+                    </div>
+
+                    <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.4rem;">🤖 AI Insights & Revenue Guidance:</div>
+                        <p id="aiGuidanceText" style="font-size: 0.82rem; color: var(--text-primary); line-height: 1.4;">
+                            Moderate risk of cancellation driven primarily by lead time and Online TA distribution channel. Consider sending automated pre-arrival verification 14 days prior.
+                        </p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--card-border); pt: 0.5rem;">
+                        <span>Python Model: Random Forest</span>
+                        <span>Training Accuracy: <strong>84.2%</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 5. EXECUTIVE FOOTER -->
+    <footer class="exec-footer">
+        <div>Hotel Booking & Guest Analysis Executive Suite | Powered by Python AI, Scikit-learn, NetworkX, MySQL, Power BI & Web BI</div>
+        <div>Status: <span style="color: var(--accent-emerald);">● Online & AI Powered</span></div>
+    </footer>
+
+    <!-- JS Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/network_graph.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
